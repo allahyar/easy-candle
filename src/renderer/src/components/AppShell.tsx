@@ -2,9 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Maximize2, Minimize2, SquareSplitVertical, X } from 'lucide-react'
 import CsvImportControls, { type ImportFeedback } from '@/components/CsvImportControls'
 import DrawingToolbar from '@/components/DrawingToolbar'
-import FloatingDrawingBar from '@/components/FloatingDrawingBar'
 import FloatingReplayBar from '@/components/FloatingReplayBar'
-import FloatingTradeBar from '@/components/FloatingTradeBar'
 import IconButton from '@/components/IconButton'
 import IndicatorToggles from '@/components/IndicatorToggles'
 import ReplayStartPicker from '@/components/ReplayStartPicker'
@@ -70,64 +68,28 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-zinc-950">
-      {!chartFullscreen && (
-        <header className="shrink-0 border-b border-zinc-800/90 bg-gradient-to-b from-zinc-900/80 to-zinc-950 px-3 py-2.5 sm:px-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <img
-                src={iconUrl}
-                alt=""
-                width={28}
-                height={28}
-                className="h-7 w-7 rounded border border-amber-500/30"
-                aria-hidden
-              />
-              <div className="leading-tight">
-                <h1 className="text-sm font-semibold tracking-tight text-amber-400">
-                  Easy Candle{appVersion ? ` v${appVersion}` : ''}
-                </h1>
-                <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-600">
-                  {imported
-                    ? inReplay
-                      ? 'Imported replay · UTC'
-                      : 'Imported · UTC'
-                    : inReplay
-                      ? 'Replay · UTC'
-                      : 'Live · UTC'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </header>
-      )}
 
-      {!chartFullscreen && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-zinc-800/90 bg-zinc-950/90 px-3 py-2 sm:px-4">
-          <SymbolSelect />
-          <TimeframeSelect />
-          <IndicatorToggles />
-          {!inReplay && <CsvImportControls onFeedback={setImportFeedback} />}
-          {!inReplay && <ReplayStartPicker />}
-          {inReplay && <DrawingToolbar />}
-          <div className="flex items-center gap-1 border-l border-zinc-800 pl-2">
-            <IconButton
-              label={chartSplit ? 'Single chart' : 'Split chart (side by side)'}
-              active={chartSplit}
-              onClick={() => setChartSplit(!chartSplit)}
-            >
-              <SquareSplitVertical className="h-4 w-4" />
-            </IconButton>
-            <IconButton
-              label="Full-screen chart (F)"
-              active={false}
-              onClick={toggleChartFullscreen}
-            >
-              <Maximize2 className="h-4 w-4" />
-            </IconButton>
-          </div>
-          <StatusBar />
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-zinc-800/90 bg-zinc-950/90 px-3 py-2 sm:px-2">
+        <SymbolSelect />
+        <TimeframeSelect />
+        <IndicatorToggles />
+        {!inReplay && <CsvImportControls onFeedback={setImportFeedback} />}
+        {!inReplay && <ReplayStartPicker />}
+        <DrawingToolbar />
+        <div className="flex items-center gap-1 border-l border-zinc-800 pl-2">
+          <IconButton
+            label={chartSplit ? 'Single chart' : 'Split chart (side by side)'}
+            active={chartSplit}
+            onClick={() => setChartSplit(!chartSplit)}
+          >
+            <SquareSplitVertical className="h-4 w-4" />
+          </IconButton>
+          <IconButton label="Full-screen chart (F)" active={false} onClick={toggleChartFullscreen}>
+            <Maximize2 className="h-4 w-4" />
+          </IconButton>
         </div>
-      )}
+        <StatusBar />
+      </div>
 
       {!chartFullscreen && importFeedback && (
         <div
@@ -174,31 +136,20 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       <main
         className={`relative flex min-h-0 flex-1 flex-col ${
-          chartFullscreen ? 'p-0' : 'p-1.5 sm:p-2'
+          chartFullscreen ? 'p-1.5 sm:p-2' : 'p-1.5 sm:p-2'
         }`}
       >
         <div
           className={`relative min-h-0 flex-1 overflow-hidden bg-zinc-950 ${
             chartFullscreen
-              ? 'rounded-none border-0 shadow-none'
+              ? 'rounded-sm border border-zinc-800 shadow-[inset_0_1px_0_0_rgba(63,63,70,0.35)]'
               : 'rounded-sm border border-zinc-800 shadow-[inset_0_1px_0_0_rgba(63,63,70,0.35)]'
           }`}
         >
           {children}
           {inReplay && <FloatingReplayBar />}
-          {chartFullscreen && inReplay && <FloatingDrawingBar />}
-          {chartFullscreen && inReplay && <FloatingTradeBar />}
-          {chartFullscreen && (
-            <div className="pointer-events-none absolute right-2 top-2 z-30">
-              <IconButton
-                label="Exit full-screen chart (F)"
-                onClick={() => setChartFullscreen(false)}
-                className="pointer-events-auto bg-zinc-950/90 shadow-lg shadow-black/40"
-              >
-                <Minimize2 className="h-4 w-4" />
-              </IconButton>
-            </div>
-          )}
+          {/*{chartFullscreen && <FloatingDrawingBar />}*/}
+          {/*{chartFullscreen && inReplay && <FloatingTradeBar />}*/}
           {(status === 'loading' || replayLoading) && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-zinc-950/75 text-sm text-zinc-400">
               <span>{replayLoading ? 'Loading replay window…' : 'Loading candles…'}</span>
@@ -226,7 +177,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </div>
           )}
         </div>
-        {!chartFullscreen && <TradePanel />}
+        <TradePanel />
       </main>
 
       <SessionReportModal />

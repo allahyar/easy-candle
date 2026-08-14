@@ -8,19 +8,16 @@ type DrawingToolbarProps = {
 }
 
 export default function DrawingToolbar({ variant = 'inline' }: DrawingToolbarProps) {
-  const mode = useReplayStore((s) => s.mode)
   const replayStatus = useReplayStore((s) => s.replayStatus)
   const drawTool = useReplayStore((s) => s.drawTool)
   const drawings = useReplayStore((s) => s.drawings)
   const setDrawTool = useReplayStore((s) => s.setDrawTool)
   const clearDrawings = useReplayStore((s) => s.clearDrawings)
 
-  if (mode !== 'replay') return null
-
   const disabled = replayStatus === 'ended'
   const shellClass =
     variant === 'floating'
-      ? 'flex items-center gap-1'
+      ? 'flex flex-col flex items-center gap-1'
       : 'flex items-center gap-1 border-l border-zinc-800 pl-2'
 
   return (

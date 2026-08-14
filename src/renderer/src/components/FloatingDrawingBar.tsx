@@ -9,7 +9,7 @@ export default function FloatingDrawingBar() {
 
   return (
     <FloatingPanel
-      title="Draw"
+      title=""
       pos={pos}
       onPosChange={setDrawingToolbarPos}
       defaultPlacement="top-left"

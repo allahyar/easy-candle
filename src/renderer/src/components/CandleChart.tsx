@@ -19,6 +19,7 @@ import wordmarkUrl from '@/assets/easycandle-wordmark.svg'
 import type { ChartOverlay } from '@/lib/indicators'
 import type { Candle } from '@shared/candleUtils'
 import type { ChartSync, TradeMarker, ViewMode } from '@/store/replayStore'
+import { ChevronUp, Scan } from 'lucide-react'
 
 const DEFAULT_VISIBLE_BARS = 50
 
@@ -265,6 +266,14 @@ export default function CandleChart({
 
   return (
     <div className="absolute inset-0 h-full w-full">
+      <button
+        type="button"
+        aria-label="Minimize panel"
+        title="Minimize"
+        className="absolute z-10 top-0 right-20 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors disabled:cursor-not-allowed disabled:opacity-40 border-zinc-700 bg-zinc-900/80 text-zinc-300 enabled:hover:border-zinc-500 enabled:hover:text-zinc-100 "
+      >
+        <Scan className="h-2.5 w-2.5" />
+      </button>
       <div ref={containerRef} className="absolute inset-0 h-full w-full" />
       <img
         src={wordmarkUrl}

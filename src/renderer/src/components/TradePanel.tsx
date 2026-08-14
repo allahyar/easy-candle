@@ -1,4 +1,11 @@
-import { ArrowDownCircle, ArrowUpCircle, CircleX, Minus, Plus } from 'lucide-react'
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  ChevronUp,
+  CircleX,
+  Minus,
+  Plus
+} from 'lucide-react'
 import IconButton from '@/components/IconButton'
 import {
   formatExitReason,
@@ -164,10 +171,20 @@ export default function TradePanel() {
               {formatPnl(perf.total)}
             </span>
           </span>
+
+          <button
+            type="button"
+            aria-label="Minimize panel"
+            title="Minimize"
+            onClick={() => onMinimizedChange(true)}
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-zinc-500 hover:bg-zinc-800/80 hover:text-zinc-300"
+          >
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 
-      <div className="max-h-36 overflow-y-auto px-3 py-1.5">
+      <div className="max-h-36 overflow-y-auto px-3 py-1.5 hidden">
         {!position && closedTrades.length === 0 ? (
           <p className="py-1.5 text-[11px] text-zinc-600">
             Open LONG or SHORT at the current close (1 unit). First SL/TP drag seeds the other at{' '}

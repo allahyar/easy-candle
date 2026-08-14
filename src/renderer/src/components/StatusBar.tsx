@@ -41,15 +41,13 @@ export default function StatusBar() {
     const parts = [
       imported ? 'Imported' : null,
       replayLabel(replayStatus),
-      isPlaying ? `${speed}x` : null,
-      formatUtcCandleTime(currentCandle?.time),
-      bufferLength > 0 ? `${replayIndex + 1}/${bufferLength}` : '0/0'
+      isPlaying ? `${speed}x` : null
     ].filter(Boolean)
 
     return (
       <div className="ml-auto flex min-w-0 flex-col items-end gap-0.5 text-[11px] text-zinc-500">
         <span
-          className={`inline-flex items-center gap-1.5 font-medium tabular-nums ${
+          className={`inline-flex bg-black p-2 items-center gap-1.5 font-medium tabular-nums ${
             ended ? 'text-amber-400/90' : 'text-zinc-400'
           }`}
         >
@@ -64,22 +62,22 @@ export default function StatusBar() {
             <LoaderCircle className="h-3 w-3 animate-spin text-zinc-500" aria-hidden />
           )}
         </span>
-        {ended && !replayMessage && (
-          <span className="text-amber-400/80">
-            {imported
-              ? 'End of imported file — jump within range or step back.'
-              : 'End of buffer — jump, step back, or wait for prefetch.'}
-          </span>
-        )}
-        {replayMessage && <span className="text-amber-400/90">{replayMessage}</span>}
-        {!ended && (
-          <span className="text-zinc-600">
-            Space: {isPlaying ? 'pause' : 'step'} · Backspace: back
-          </span>
-        )}
-        {ended && (
-          <span className="text-zinc-600">Backspace: back</span>
-        )}
+        {/*{ended && !replayMessage && (*/}
+        {/*  <span className="text-amber-400/80">*/}
+        {/*    {imported*/}
+        {/*      ? 'End of imported file — jump within range or step back.'*/}
+        {/*      : 'End of buffer — jump, step back, or wait for prefetch.'}*/}
+        {/*  </span>*/}
+        {/*)}*/}
+        {/*{replayMessage && <span className="text-amber-400/90">{replayMessage}</span>}*/}
+        {/*{!ended && (*/}
+        {/*  <span className="text-zinc-600">*/}
+        {/*    Space: {isPlaying ? 'pause' : 'step'} · Backspace: back*/}
+        {/*  </span>*/}
+        {/*)}*/}
+        {/*{ended && (*/}
+        {/*  <span className="text-zinc-600">Backspace: back</span>*/}
+        {/*)}*/}
       </div>
     )
   }
