@@ -391,7 +391,7 @@ void WsConnect()
      }
    if(!SocketConnect(g_socket, InpHost, (uint)InpPort, 2000))
      {
-      PrintFormat("EasyCandleBridge: SocketConnect %s:%d failed", InpHost, InpPort);
+      PrintFormat("EasyCandleBridge: SocketConnect %s:%d failed (err %d)", InpHost, InpPort, GetLastError());
       SocketClose(g_socket);
       g_socket = INVALID_HANDLE;
       return;
@@ -435,13 +435,19 @@ void WsPoll()
       WsDisconnect();
       return;
      }
-   if(SocketIsReadable(g_socket) == 0) return;
+   uint readable = (uint)SocketIsReadable(g_socket);
+   if(readable == 0) return;
+
+   // SocketRead waits until the full maxlen arrives, so always request exactly
+   // the pending byte count — larger values stall until the timeout (-1).
+   int maxlen = (int)readable;
+   if(maxlen > MAX_RECV_CHUNK) maxlen = MAX_RECV_CHUNK;
 
    uchar chunk[];
-   int got = SocketRead(g_socket, chunk, MAX_RECV_CHUNK, 1000);
+   int got = SocketRead(g_socket, chunk, maxlen, 1000);
    if(got <= 0)
      {
-      PrintFormat("EasyCandleBridge: SocketRead failed (%d)", got);
+      PrintFormat("EasyCandleBridge: SocketRead failed (%d, err %d)", got, GetLastError());
       WsDisconnect();
       return;
      }
@@ -714,7 +720,7 @@ int OnInit()
    EventSetMillisecondTimer(200);
 
    Comment("EasyCandleBridge: " + (InpEnable ? "enabled" : "disabled") +
-           " · ws://" + InpHost + ":" + InpPort);
+           " · ws://" + InpHost + ":" + IntegerToString(InpPort));
    return INIT_SUCCEEDED;
   }
 
