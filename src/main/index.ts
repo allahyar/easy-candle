@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { registerImportIpc } from './importStore'
 import { registerKlinesIpc } from './klines'
+import { registerMtBridgeIpc, stopMtBridgeForQuit } from './mtBridge'
 import { setupAutoUpdater } from './updater'
 
 function createWindow(): void {
@@ -93,6 +94,7 @@ app.whenReady().then(() => {
 
   registerKlinesIpc()
   registerImportIpc()
+  registerMtBridgeIpc()
   setupAutoUpdater()
   createWindow()
 
@@ -105,4 +107,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+app.on('will-quit', () => {
+  stopMtBridgeForQuit()
 })

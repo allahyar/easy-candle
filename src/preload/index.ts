@@ -11,6 +11,13 @@ import type {
 } from '../shared/importTypes'
 import type { KlinesFetchParams, KlinesFetchResult } from '../shared/klinesTypes'
 import type {
+  MtHistoryRequestParams,
+  MtHistoryRequestResult,
+  MtLiveEvent,
+  MtServerState,
+  MtStartResult
+} from '../shared/mtBridgeTypes'
+import type {
   UpdateAvailableInfo,
   UpdateDownloadedInfo,
   UpdateErrorInfo,
@@ -64,7 +71,21 @@ const api = {
   onUpdateDownloaded: (callback: (info: UpdateDownloadedInfo) => void): (() => void) =>
     subscribe('update:downloaded', callback),
   onUpdateError: (callback: (info: UpdateErrorInfo) => void): (() => void) =>
-    subscribe('update:error', callback)
+    subscribe('update:error', callback),
+  mtBridge: {
+    getState: (): Promise<MtServerState> => ipcRenderer.invoke('mt:getState'),
+    startServer: (port: number): Promise<MtStartResult> => ipcRenderer.invoke('mt:start', port),
+    stopServer: (): Promise<void> => ipcRenderer.invoke('mt:stop'),
+    requestHistory: (params: MtHistoryRequestParams): Promise<MtHistoryRequestResult> =>
+      ipcRenderer.invoke('mt:requestHistory', params),
+    setLive: (clientId: string | undefined, live: boolean): Promise<void> =>
+      ipcRenderer.invoke('mt:setLive', clientId, live),
+    clearLogs: (): Promise<void> => ipcRenderer.invoke('mt:clearLogs'),
+    onState: (callback: (state: MtServerState) => void): (() => void) =>
+      subscribe('mt:state', callback),
+    onEvent: (callback: (event: MtLiveEvent) => void): (() => void) =>
+      subscribe('mt:event', callback)
+  }
 }
 
 if (process.contextIsolated) {

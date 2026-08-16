@@ -31,6 +31,7 @@ type UiLayoutState = {
   shortcutsDialogOpen: boolean
   aboutDialogOpen: boolean
   importDataDialogOpen: boolean
+  mtBridgeDialogOpen: boolean
   toggleChartFullscreen: () => void
   setChartFullscreen: (value: boolean) => void
   setReplayControlsMinimized: (value: boolean) => void
@@ -45,6 +46,7 @@ type UiLayoutState = {
   setShortcutsDialogOpen: (value: boolean) => void
   setAboutDialogOpen: (value: boolean) => void
   setImportDataDialogOpen: (value: boolean) => void
+  setMtBridgeDialogOpen: (value: boolean) => void
 }
 
 function loadPersisted(): PersistedLayout {
@@ -95,6 +97,7 @@ export const useUiLayoutStore = create<UiLayoutState>((set, get) => ({
   shortcutsDialogOpen: false,
   aboutDialogOpen: false,
   importDataDialogOpen: false,
+  mtBridgeDialogOpen: false,
 
   toggleChartFullscreen: () => {
     set({ chartFullscreen: !get().chartFullscreen })
@@ -172,6 +175,10 @@ export const useUiLayoutStore = create<UiLayoutState>((set, get) => ({
 
   setImportDataDialogOpen: (value) => {
     set({ importDataDialogOpen: value })
+  },
+
+  setMtBridgeDialogOpen: (value) => {
+    set({ mtBridgeDialogOpen: value })
   }
 }))
 

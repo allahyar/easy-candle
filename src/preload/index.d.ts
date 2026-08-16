@@ -10,6 +10,13 @@ import type {
 } from '../shared/importTypes'
 import type { KlinesFetchParams, KlinesFetchResult } from '../shared/klinesTypes'
 import type {
+  MtHistoryRequestParams,
+  MtHistoryRequestResult,
+  MtLiveEvent,
+  MtServerState,
+  MtStartResult
+} from '../shared/mtBridgeTypes'
+import type {
   UpdateAvailableInfo,
   UpdateDownloadedInfo,
   UpdateErrorInfo,
@@ -42,6 +49,16 @@ interface EasyCandleApi {
   onUpdateProgress: (callback: (info: UpdateProgressInfo) => void) => () => void
   onUpdateDownloaded: (callback: (info: UpdateDownloadedInfo) => void) => () => void
   onUpdateError: (callback: (info: UpdateErrorInfo) => void) => () => void
+  mtBridge: {
+    getState: () => Promise<MtServerState>
+    startServer: (port: number) => Promise<MtStartResult>
+    stopServer: () => Promise<void>
+    requestHistory: (params: MtHistoryRequestParams) => Promise<MtHistoryRequestResult>
+    setLive: (clientId: string | undefined, live: boolean) => Promise<void>
+    clearLogs: () => Promise<void>
+    onState: (callback: (state: MtServerState) => void) => () => void
+    onEvent: (callback: (event: MtLiveEvent) => void) => () => void
+  }
 }
 
 declare global {

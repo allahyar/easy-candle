@@ -11,6 +11,7 @@ import FloatingTradeBar from '@/components/FloatingTradeBar'
 import IconButton from '@/components/IconButton'
 import IndicatorsDropdown from '@/components/IndicatorsDropdown'
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog'
+import MtBridgeDialog from '@/components/MtBridgeDialog'
 import ReplayStartModal from '@/components/ReplayStartModal'
 import SessionReportModal from '@/components/SessionReportModal'
 import UpdateModal from '@/components/UpdateModal'
@@ -104,6 +105,7 @@ export default function AppShell({
           <ChartTypeSelect />
           <IndicatorsDropdown />
           {!inReplay && <ImportDataDialog onFeedback={setImportFeedback} />}
+          {!inReplay && <MtBridgeDialog onFeedback={setImportFeedback} />}
           {!inReplay && <ReplayStartModal />}
           {showDrawingToolbar && <DrawingToolbar />}
           <div className="flex items-center gap-1 border-l border-zinc-800 pl-2">
