@@ -24,6 +24,12 @@ import {
   toUtcParts
 } from '@/lib/utcDateTime'
 import { TIMEFRAMES } from '@shared/timeframes'
+import {
+  importedCoverage,
+  liveCoverage,
+  validateReplayStart,
+  type ReplayCoverage
+} from '@shared/replayCoverage'
 import { useReplayStore } from '@/store/replayStore'
 
 const TAB_STORAGE_KEY = 'easy-candle:replay-modal-tab'
@@ -69,13 +75,18 @@ export default function ReplayStartDialog() {
   const intervalSeconds = TIMEFRAMES[timeframe]?.seconds ?? 900
   /**
    * Imported coverage comes from the dataset metadata, not the loaded window —
-   * the chart only holds a slice of the series now.
+   * the chart only holds a slice of the series now. Live coverage is resolved
+   * per action so "now" is never stale.
    */
-  const importStats = imported ? importMeta?.timeframes?.[timeframe] : undefined
-  const localCandleCount = importStats?.candleCount ?? 0
-  const localFirstTime = importStats?.firstTime ?? 0
-  const localLastTime = importStats?.lastTime ?? 0
+  const importCoverage = imported ? importedCoverage(importMeta, timeframe) : null
+  const localCandleCount = importCoverage?.count ?? 0
+  const localFirstTime = importCoverage?.firstTime ?? 0
+  const localLastTime = importCoverage?.lastTime ?? 0
   const canStart = imported ? status === 'ready' && localCandleCount > 0 : candles.length > 0
+
+  function feedCoverage(): ReplayCoverage {
+    return importCoverage ?? liveCoverage(nowUtcSeconds())
+  }
 
   useEffect(() => {
     if (!open) return undefined
@@ -173,15 +184,13 @@ export default function ReplayStartDialog() {
       return
     }
 
+    const invalid = validateReplayStart(seconds, feedCoverage())
+    if (invalid) {
+      setLocalError(invalid)
+      return
+    }
+
     if (localFeed) {
-      if (seconds < localFirstTime) {
-        setLocalError('Selected time is before the start of the imported data.')
-        return
-      }
-      if (seconds > localLastTime) {
-        setLocalError('Selected time is after the end of the imported data.')
-        return
-      }
       const message = `Manual replay · start ${formatUtcCandleTime(seconds)}`
       await startImportedReplayAtTime(seconds, { message })
       setOpen(false)
@@ -196,18 +205,14 @@ export default function ReplayStartDialog() {
     setLocalError(null)
 
     if (tab === 'manual') {
-      if (localFeed) {
-        if (localCandleCount === 0) return
-        const seconds = Math.max(
-          localFirstTime,
-          localLastTime - rangeToSeconds(preset.value, preset.unit)
-        )
-        const parts = toUtcParts(seconds)
-        setDate(parts.date)
-        setTime(parts.time)
-        return
-      }
-      const seconds = nowUtcSeconds() - rangeToSeconds(preset.value, preset.unit)
+      if (localFeed && localCandleCount === 0) return
+      // Anchor at the newest covered point (import end / now) and step back,
+      // clamped to the earliest covered candle (0 = unbounded for live feeds).
+      const coverage = feedCoverage()
+      const seconds = Math.max(
+        coverage.firstTime,
+        coverage.lastTime - rangeToSeconds(preset.value, preset.unit)
+      )
       const parts = toUtcParts(seconds)
       setDate(parts.date)
       setTime(parts.time)
