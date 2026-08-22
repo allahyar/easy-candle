@@ -30,6 +30,7 @@ import {
   type MtBridgeIpcEvent,
   type MtPreviewSummary
 } from '@shared/mtBridgeTypes'
+import { importedCoverage, liveCoverage, validateReplayStart } from '@shared/replayCoverage'
 import { getIndicator } from '@/lib/indicators'
 import {
   clampRiskReward,
@@ -1331,8 +1332,8 @@ export const useReplayStore = create<ReplayStore>((set, get) => {
     if (!Number.isFinite(target)) return false
 
     const timeframe = get().timeframe
-    const stats = meta.timeframes?.[timeframe]
-    if (stats && (target < stats.firstTime || target > stats.lastTime)) return false
+    const coverage = importedCoverage(meta, timeframe)
+    if (validateReplayStart(target, coverage)) return false
 
     const requestId = (replayRequestId += 1)
     set({ replayLoading: true, replayMessage: null })
@@ -1823,10 +1824,10 @@ export const useReplayStore = create<ReplayStore>((set, get) => {
       return false
     }
 
-    const nowSec = Math.floor(Date.now() / 1000)
-    if (startSec >= nowSec) {
+    const invalid = validateReplayStart(startSec, liveCoverage(Date.now() / 1000))
+    if (invalid) {
       set({
-        replayMessage: 'Start time must be in the past (UTC).',
+        replayMessage: invalid,
         replayLoading: false
       })
       return false
@@ -3012,7 +3013,7 @@ export const useReplayStore = create<ReplayStore>((set, get) => {
         set({ replayMessage: 'No imported candles to replay.' })
         return
       }
-      const first = meta.timeframes?.[get().timeframe]?.firstTime ?? meta.firstTime ?? 0
+      const first = importedCoverage(meta, get().timeframe).firstTime
       // Start on the 5th candle so the first bars are visible as context.
       void startImportedReplayWindow(first, { lookbackBars: 0, startOffsetBars: 4 })
     },
@@ -3103,9 +3104,11 @@ export const useReplayStore = create<ReplayStore>((set, get) => {
         return
       }
 
-      const nowSec = Math.floor(Date.now() / 1000)
-      if (target >= nowSec) {
-        set({ replayMessage: 'Jump time must be in the past (UTC).' })
+      const invalid = validateReplayStart(target, liveCoverage(Date.now() / 1000), {
+        subject: 'Jump time'
+      })
+      if (invalid) {
+        set({ replayMessage: invalid })
         return
       }
 
