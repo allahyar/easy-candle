@@ -3,6 +3,8 @@ import {
   buildReplayWindowMs,
   fetchCandles,
   fetchCandlesRange,
+  fetchOlderCandles,
+  HISTORY_PAGE_BARS,
   prefetchForward,
   PREFETCH_BATCH_SIZE
 } from '@/lib/binance'
@@ -371,6 +373,11 @@ type ReplayStore = {
   importedCandles: Candle[]
   /** Coverage of the imported window currently in memory (null when full/none). */
   importWindow: ImportLoadedWindow | null
+  /**
+   * False once a backward Binance history page came back short/empty, so the
+   * chart stops asking at the history edge.
+   */
+  liveHistoryHasMore: boolean
   /** Persisted MT imports shown in the symbol dropdown. */
   importedList: ImportedDatasetMeta[]
   mtBridge: MtBridgeConnectionStatus
@@ -479,6 +486,11 @@ type ReplayStore = {
   selectImportedDataset: (id: string, timeframe?: string) => Promise<void>
   /** Page older imported bars when the viewport reaches the oldest loaded candle. */
   loadImportedHistory: () => Promise<void>
+  /**
+   * Page older bars for the active feed (imported window or Binance history)
+   * when the viewport reaches the oldest loaded candle.
+   */
+  loadOlderHistory: () => Promise<void>
   startImportedReplay: () => void
   startImportedReplayAt: (startIndex: number, opts?: { message?: string | null }) => void
   /** Start an imported replay at a UTC time, loading only the window it needs. */
@@ -1862,7 +1874,9 @@ export const useReplayStore = create<ReplayStore>((set, get) => {
     set({
       replayLoading: true,
       replayMessage: null,
-      error: null
+      error: null,
+      // Fresh buffer → the history edge is unknown again.
+      liveHistoryHasMore: true
     })
 
     try {
@@ -2083,6 +2097,7 @@ export const useReplayStore = create<ReplayStore>((set, get) => {
     importMeta: null,
     importedCandles: [],
     importWindow: null,
+    liveHistoryHasMore: true,
     importedList: [],
     mtBridge: { ...DEFAULT_MT_BRIDGE_STATUS },
     mtPreview: null,
@@ -2749,7 +2764,8 @@ export const useReplayStore = create<ReplayStore>((set, get) => {
 
       const { symbol, timeframe } = get()
 
-      set({ status: 'loading', error: null })
+      // New series → history edge is unknown again.
+      set({ status: 'loading', error: null, liveHistoryHasMore: true })
 
       try {
         const candles = await fetchCandles({
@@ -3001,6 +3017,74 @@ export const useReplayStore = create<ReplayStore>((set, get) => {
             revision: s.chartSync.revision + 1
           }
         }))
+      } finally {
+        prefetchInFlight = false
+        set({ isPrefetching: false })
+      }
+    },
+
+    async loadOlderHistory() {
+      if (get().dataSource === 'imported') {
+        await get().loadImportedHistory()
+        return
+      }
+
+      if (!isBinanceDataSource(get().dataSource)) return
+      if (prefetchInFlight) return
+      if (!get().liveHistoryHasMore) return
+
+      const replaying = get().mode === 'replay'
+      const existing = replaying ? engine.getState().candles : get().candles
+      if (!existing.length) return
+
+      const oldest = existing[0].time
+      const { symbol, timeframe } = get()
+      const generation = loadGeneration
+
+      prefetchInFlight = true
+      set({ isPrefetching: true })
+
+      try {
+        const older = await fetchOlderCandles({
+          symbol,
+          interval: timeframe,
+          beforeTimeSeconds: oldest,
+          limit: HISTORY_PAGE_BARS
+        })
+
+        if (generation !== loadGeneration) return
+        if (get().symbol !== symbol || get().timeframe !== timeframe) return
+        if ((get().mode === 'replay') !== replaying) return
+
+        // A short page means Binance has no more history for this symbol/TF.
+        if (older.length < HISTORY_PAGE_BARS) set({ liveHistoryHasMore: false })
+        if (!older.length) return
+
+        const merged = dedupeCandlesByTime(older.concat(existing))
+
+        if (replaying) {
+          // Prepending shifts every index, so re-seek by time to keep the playhead.
+          const anchor = engine.getCurrentCandle()?.time ?? null
+          const keptSpeed = engine.getState().speed
+          engine.load(merged)
+          engine.setSpeed(keptSpeed)
+          if (anchor != null) engine.seekToTime(anchor)
+          publishReplay('replace', { fitContent: false })
+          return
+        }
+
+        set((s) => ({
+          candles: merged,
+          chartSync: {
+            kind: 'replace' as const,
+            fitContent: false,
+            revision: s.chartSync.revision + 1
+          }
+        }))
+      } catch (err) {
+        if (generation !== loadGeneration) return
+        const message = err instanceof Error ? err.message : 'Failed to load older candles'
+        set({ replayMessage: message })
       } finally {
         prefetchInFlight = false
         set({ isPrefetching: false })

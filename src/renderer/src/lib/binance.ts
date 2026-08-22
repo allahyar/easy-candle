@@ -13,6 +13,9 @@ export const REPLAY_FORWARD_BARS = 500
 /** Batch size when extending the buffer during play. */
 export const PREFETCH_BATCH_SIZE = 500
 
+/** Bars pulled in when the viewport reaches the oldest loaded candle. */
+export const HISTORY_PAGE_BARS = 1000
+
 /** Max forward pages when filling a replay/jump window. */
 const MAX_RANGE_PAGES = 8
 
@@ -147,6 +150,26 @@ export async function prefetchForward(params: {
     symbol: params.symbol,
     interval: params.interval,
     startTime: Math.floor(after * 1000) + 1,
+    limit
+  })
+}
+
+/** Client-side: fetch the `limit` bars ending just before `beforeTimeSeconds`. */
+export async function fetchOlderCandles(params: {
+  symbol: string
+  interval: string
+  beforeTimeSeconds: number
+  limit?: number
+}): Promise<Candle[]> {
+  const before = Number(params.beforeTimeSeconds)
+  if (!Number.isFinite(before) || before <= 0) return []
+
+  const limit = clampKlineLimit(params.limit, HISTORY_PAGE_BARS)
+
+  return fetchCandlesPage({
+    symbol: params.symbol,
+    interval: params.interval,
+    endTime: Math.floor(before * 1000) - 1,
     limit
   })
 }

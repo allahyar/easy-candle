@@ -33,8 +33,9 @@ export default function App() {
   const dataSource = useReplayStore((s) => s.dataSource)
   const replayLoading = useReplayStore((s) => s.replayLoading)
   const importWindow = useReplayStore((s) => s.importWindow)
+  const liveHistoryHasMore = useReplayStore((s) => s.liveHistoryHasMore)
   const isPrefetching = useReplayStore((s) => s.isPrefetching)
-  const loadImportedHistory = useReplayStore((s) => s.loadImportedHistory)
+  const loadOlderHistory = useReplayStore((s) => s.loadOlderHistory)
   const setSecondaryTimeframe = useReplayStore((s) => s.setSecondaryTimeframe)
   const setDriverPane = useReplayStore((s) => s.setDriverPane)
   const [primaryPriceScaleWidth, setPrimaryPriceScaleWidth] = useState(0)
@@ -51,8 +52,8 @@ export default function App() {
   /**
    * Range-based loading hook. Fires once per loaded series when the viewport
    * reaches the oldest candle on the chart. Imported datasets page an older
-   * window in from disk/IndexedDB here instead of holding the whole series;
-   * Binance history still comes from the replay window loader.
+   * window in from disk/IndexedDB; Binance pages an older klines batch. Both go
+   * through `loadOlderHistory`, which picks the right feed.
    */
   const handleReachHistoryEdge = useCallback(
     (info: VisibleRangeInfo) => {
@@ -61,11 +62,9 @@ export default function App() {
         count: prev?.key === seriesKey ? prev.count + 1 : 1,
         untilTime: info.fromTime ?? 0
       }))
-      if (dataSource === 'imported') {
-        void loadImportedHistory()
-      }
+      void loadOlderHistory()
     },
-    [dataSource, loadImportedHistory, seriesKey]
+    [loadOlderHistory, seriesKey]
   )
 
   useEffect(() => {
@@ -163,8 +162,12 @@ export default function App() {
               info={primaryVisibleRange}
               loadedCount={overlaySource.length}
               historyRequest={historyRequest?.key === seriesKey ? historyRequest : null}
-              historyPaging={dataSource === 'imported' && importWindow?.hasMoreBefore === true}
-              historyLoading={dataSource === 'imported' && isPrefetching}
+              historyPaging={
+                dataSource === 'imported'
+                  ? importWindow?.hasMoreBefore === true
+                  : liveHistoryHasMore
+              }
+              historyLoading={isPrefetching}
             />
           </div>
         </div>
