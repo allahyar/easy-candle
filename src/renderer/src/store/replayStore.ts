@@ -2797,7 +2797,7 @@ export const useReplayStore = create<ReplayStore>((set, get) => {
 
     disconnectMetaTrader() {
       if (get().mode === 'replay') return
-      if (get().dataSource !== 'mtbridge' && !isMetatraderImport(get().importMeta)) return
+      if (!isMetatraderImport(get().importMeta)) return
       resetReplayState()
       set({
         symbol: DEFAULT_SYMBOL.binanceSymbol,

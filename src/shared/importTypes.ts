@@ -1,6 +1,11 @@
 import type { Candle } from './candleUtils'
 
-export type DataSource = 'binance' | 'imported' | 'mtbridge'
+/**
+ * Active candle feed. MetaTrader data arrives as an `imported` dataset with
+ * `origin: 'metatrader'` (see `isMetatraderImport`) — there is no separate
+ * live-bridge source.
+ */
+export type DataSource = 'binance' | 'imported'
 
 export function isBinanceDataSource(source: DataSource): boolean {
   return source === 'binance'

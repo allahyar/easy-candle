@@ -57,8 +57,7 @@ function LiveStatus() {
   const replayMessage = useReplayStore((s) => s.replayMessage)
   const importMeta = useReplayStore((s) => s.importMeta)
   const imported = dataSource === 'imported'
-  const mtbridge = dataSource === 'mtbridge'
-  const mtFeed = mtbridge || isMetatraderImport(importMeta)
+  const mtFeed = isMetatraderImport(importMeta)
 
   const candlesLabel =
     replayMessage ??
@@ -72,15 +71,14 @@ function LiveStatus() {
           <span>Loading…</span>
         </>
       )}
-      {status === 'ready' && candles.length === 0 && !mtbridge && (
+      {status === 'ready' && candles.length === 0 && (
         <span className="text-zinc-400">No candles returned</span>
       )}
       {status === 'ready' && candles.length > 0 && (
-        <span className={imported || mtbridge ? 'text-amber-400/90' : undefined}>{candlesLabel}</span>
+        <span className={imported ? 'text-amber-400/90' : undefined}>{candlesLabel}</span>
       )}
-      {status === 'idle' && mtbridge && <span className="max-w-[28rem] truncate">{replayMessage}</span>}
       {status === 'error' && <span className="text-red-400">{error || 'Load failed'}</span>}
-      {status === 'idle' && !mtbridge && <span>Waiting to load…</span>}
+      {status === 'idle' && <span>Waiting to load…</span>}
     </div>
   )
 }
@@ -98,7 +96,7 @@ function ReplayStatus() {
   const dataSource = useReplayStore((s) => s.dataSource)
   const importMeta = useReplayStore((s) => s.importMeta)
   const imported = dataSource === 'imported'
-  const mtFeed = dataSource === 'mtbridge' || isMetatraderImport(importMeta)
+  const mtFeed = isMetatraderImport(importMeta)
 
   const ended = replayStatus === 'ended'
   const busy = replayLoading || isPrefetching

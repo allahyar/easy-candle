@@ -71,10 +71,8 @@ export default function AppShell({
   const inReplay = mode === 'replay'
   const showOrderTicket = showPaperTrade && !chartFullscreen && (inReplay || tourPaperTradePreview)
   const imported = dataSource === 'imported'
-  const mtbridge = dataSource === 'mtbridge'
-  const mtFeed = mtbridge || isMetatraderImport(importMeta)
-  const showEmptyLive =
-    !inReplay && candles.length === 0 && (status === 'ready' || (mtbridge && status === 'idle'))
+  const mtFeed = isMetatraderImport(importMeta)
+  const showEmptyLive = !inReplay && candles.length === 0 && status === 'ready'
   const showEndedBanner = inReplay && replayStatus === 'ended' && !chartFullscreen
 
   useEffect(() => {
@@ -246,9 +244,7 @@ export default function AppShell({
                     ? mtFeed
                       ? 'UTC · MetaTrader'
                       : 'UTC · Imported CSV'
-                    : mtbridge
-                      ? 'UTC · MetaTrader'
-                      : 'UTC · Binance klines'}
+                    : 'UTC · Binance klines'}
                 </span>
               </div>
             )}
@@ -256,12 +252,12 @@ export default function AppShell({
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-zinc-950/60 px-4 text-center text-sm text-zinc-400">
                 <span>
                   {imported
-                    ? 'No candles in the imported file.'
-                    : mtbridge
-                      ? `Attach the Easy Candle EA in MT5 and allow ${MT_BRIDGE_WS_URL}`
-                      : 'No candles for this symbol / timeframe.'}
+                    ? mtFeed
+                      ? `No candles received yet — attach the Easy Candle EA in MT5 and allow ${MT_BRIDGE_WS_URL}`
+                      : 'No candles in the imported file.'
+                    : 'No candles for this symbol / timeframe.'}
                 </span>
-                {!imported && !mtbridge && (
+                {!imported && (
                   <button
                     type="button"
                     onClick={() => void loadCandles()}

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { Drawing, FibLevelConfig } from '@/lib/chart/drawingGeometry'
 import type { ClosedTrade, PendingOrder, Position } from '@/lib/paperTrade'
 import { useReplayStore, type TradeMarker, type ViewMode } from '@/store/replayStore'
+import type { DataSource } from '@shared/importTypes'
 
 const STORAGE_KEY = 'easy-candle:sessions'
 
@@ -36,7 +37,7 @@ export type Session = {
   /** Playhead candle open time (unix seconds); null when not in replay. */
   replayTime: number | null
   speed: number
-  dataSource: 'binance' | 'imported' | 'mtbridge'
+  dataSource: DataSource
   /** Imported dataset id to reload when resuming an imported replay. */
   importId: string | null
 }
@@ -362,7 +363,9 @@ function sanitizeSession(raw: unknown): Session | null {
     mode: rec.mode === 'replay' ? 'replay' : 'live',
     replayTime: isFiniteNumber(rec.replayTime) ? rec.replayTime : null,
     speed: isFiniteNumber(rec.speed) ? Math.min(1000, Math.max(0.1, rec.speed)) : 1,
-    dataSource: rec.dataSource === 'imported' ? 'imported' : rec.dataSource === 'mtbridge' ? 'mtbridge' : 'binance',
+    // Legacy records may carry 'mtbridge'; MetaTrader data is an import now, and
+    // resuming needs `importId`, so anything but 'imported' falls back to live.
+    dataSource: rec.dataSource === 'imported' ? 'imported' : 'binance',
     importId: typeof rec.importId === 'string' && rec.importId.length > 0 ? rec.importId : null
   }
 }
